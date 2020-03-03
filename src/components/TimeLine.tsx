@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Truck } from '../services/ITruckTimeLineService';
 
 interface ITrucksTimeLineProps {
@@ -20,7 +20,12 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     origin: POSITION,
     translation: POSITION,
   });
+  const timeLineRect =  useRef({width:null});
   //const [paddingLeft, setPaddingLeft] = useState(0);
+  useEffect(() => {
+    let clientRect = document.getElementById("timeLineContainer").getBoundingClientRect();
+    //timeLineRect.width = clientRect.width;
+  }, []);
   useEffect(() => {
     console.log(props.trucks);
     if (props.trucks.length > 0) {
@@ -42,11 +47,14 @@ export function TimeLine(props: ITrucksTimeLineProps) {
   }, [props.trucks]);
 
   const handleMouseDown = useCallback(({ clientX, clientY }) => {
-    setState(state => ({
-      ...state,
-      isDragging: true,
-      origin: { x: clientX, y: clientY },
-    }));
+    console.log(state.isDragging);
+    if (!state.isDragging) {
+      setState(state => ({
+        ...state,
+        isDragging: true,
+        origin: { x: clientX, y: clientY },
+      }));
+    }
   }, []);
 
   const handleMouseMove = useCallback(
@@ -70,9 +78,11 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
   useEffect(() => {
     if (state.isDragging) {
+      console.log("Subscribe");
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
+      console.log("Unsubscribe");
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
 
@@ -132,7 +142,9 @@ export function TimeLine(props: ITrucksTimeLineProps) {
           );
         })}
       </div>
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position:'relative' }}>
+        {/* TODO: this absolute div maybe not needed*/}
+        <div style={{position:'absolute', width: "100%", height: "100%"}}></div>
         {props.trucks.map(truck => (
           <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
             <div
