@@ -20,11 +20,15 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     origin: POSITION,
     translation: POSITION,
   });
-  const timeLineRect =  useRef({width:null});
+  const timeLineRect: React.MutableRefObject<{ width: number; height: number }> = useRef({ width: null, height: null });
+  const truckRect: React.MutableRefObject<{ width: number; height: number }> = useRef({ width: null, height: null });
+  const timeWidth = useRef(null)
   //const [paddingLeft, setPaddingLeft] = useState(0);
   useEffect(() => {
-    let clientRect = document.getElementById("timeLineContainer").getBoundingClientRect();
+    let timeLineClientRect = document.getElementById("timeLineContainer").getBoundingClientRect();
     //timeLineRect.width = clientRect.width;
+    timeLineRect.current.width = timeLineClientRect.width;
+    timeLineRect.current.height = timeLineClientRect.height;
   }, []);
   useEffect(() => {
     console.log(props.trucks);
@@ -60,7 +64,12 @@ export function TimeLine(props: ITrucksTimeLineProps) {
   const handleMouseMove = useCallback(
     ({ clientX, clientY }) => {
       const translation = { x: clientX - state.origin.x, y: clientY - state.origin.y };
-      console.log(translation);
+
+      /*let offsetY = Math.round((translation.y / timeLineRect.current.height) * 100);
+      var timeLineWidth = timeLineRect.current.width * (100 - props.truckWidth) / 100;
+      let offsetX = Math.round((translation.x / timeLineWidth) * 100);
+      console.log(offsetX + " " + offsetY);*/
+
       setState(state => ({
         ...state,
         translation,
@@ -68,6 +77,17 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     },
     [state.origin],
   );
+
+  function getOffsetX() {
+    //if (state.isDragging) {
+      var timeLineWidth = timeLineRect.current.width * (100 - props.truckWidth) / 100;
+      //let offsetX = Math.round((state.translation.x / timeLineWidth) * 100);
+      let offsetX = (state.translation.x / timeLineWidth) * 100;
+      return offsetX;
+    /*} else {
+      return 0;
+    }*/
+  }
 
   const handleMouseUp = useCallback(() => {
     setState(state => ({
@@ -86,7 +106,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
 
-      setState(state => ({ ...state, translation: { x: 0, y: 0 } }));
+      //setState(state => ({ ...state, translation: { x: 0, y: 0 } }));
     }
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
@@ -115,36 +135,44 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        height: '100%',
-        flexShrink: 0,
+        height: '100%'
+        /*,flexShrink: 0,*/
       }}
     >
-      <div style={{ paddingLeft: `${props.truckWidth}%`, display: 'flex', overflowX: 'hidden' }}>
-        {[...Array(timeStepNumber).keys()].map(index => {
-          //console.log(minDate);
-          let increasedDate = new Date(minDate.getTime());
-          //console.log(increasedDate);
-          //4 is hours
-          increasedDate.setHours(minDate.getHours() + index * 4);
-          return (
-            <div
-              style={{
-                display: 'flex',
-                minWidth: `${props.timeStepWidth}%`,
-                whiteSpace: 'nowrap',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-              key={index}
-            >
-              {formatDate(increasedDate)}
-            </div>
-          );
-        })}
+      {/* { paddingLeft: `${props.truckWidth}%`, display: 'flex', overflowX: 'hidden' } */}
+      <div id={"timesContainer"} style={{ marginLeft: `${props.truckWidth}%`, display: 'flex', overflowX: 'hidden', flexShrink: 0 }}>
+        {/*  overflowX: 'hidden' */}
+        <div style={{ marginLeft:`${getOffsetX()}%`, 
+         marginRight:`-${getOffsetX()}%` ,width: '100%', display: 'flex'}}>
+          {[...Array(timeStepNumber+1).keys()].map(index => {
+            //console.log(minDate);
+            let increasedDate = new Date(minDate.getTime());
+            let unit = props.timeStepWidth / (4 * 60);
+            let offsetMinute = getOffsetX() / unit;
+            console.log(Math.floor(offsetMinute / (4 * 60) ));
+            //4 is hours
+            increasedDate.setHours(minDate.getHours() + (index-1) * 4);
+            return (
+              <div
+                style={{
+                  display: 'flex',
+                  minWidth: `${props.timeStepWidth}%`,
+                  maxWidth: `${props.timeStepWidth}%`,
+                  whiteSpace: 'nowrap',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+                key={index}
+              >
+                {formatDate(increasedDate)}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position:'relative' }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position: 'relative' }}>
         {/* TODO: this absolute div maybe not needed*/}
-        <div style={{position:'absolute', width: "100%", height: "100%"}}></div>
+        <div style={{ position: 'absolute', width: "100%", height: "100%" }}></div>
         {props.trucks.map(truck => (
           <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
             <div
@@ -159,6 +187,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
                 //console.log(order);
                 let initialOffset = Math.floor(props.timeStepWidth / 2);
                 let unit = props.timeStepWidth / (4 * 60);
+               
                 let diff = diff_minutes(minDate, order.from);
                 let orderTimeLength = diff_minutes(order.to, order.from);
                 //console.log(diff);
