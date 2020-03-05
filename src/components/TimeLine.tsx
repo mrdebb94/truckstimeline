@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Truck } from '../services/ITruckTimeLineService';
+import { number } from 'prop-types';
+import { ProvidePlugin } from 'webpack';
 
 interface ITrucksTimeLineProps {
   trucks: Truck[];
@@ -19,13 +21,21 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     isDragging: false,
     origin: POSITION,
     translation: POSITION,
+    offsetX: -props.timeStepWidth,
+    offsetStep: 0,
   });
-  const timeLineRect: React.MutableRefObject<{ width: number; height: number }> = useRef({ width: null, height: null });
-  const truckRect: React.MutableRefObject<{ width: number; height: number }> = useRef({ width: null, height: null });
-  const timeWidth = useRef(null)
+  const timeLineRect: React.MutableRefObject<{ width: number; height: number }> = useRef({
+    width: null,
+    height: null,
+  });
+  const truckRect: React.MutableRefObject<{ width: number; height: number }> = useRef({
+    width: null,
+    height: null,
+  });
+  const timeWidth = useRef(null);
   //const [paddingLeft, setPaddingLeft] = useState(0);
   useEffect(() => {
-    let timeLineClientRect = document.getElementById("timeLineContainer").getBoundingClientRect();
+    let timeLineClientRect = document.getElementById('timeLineContainer').getBoundingClientRect();
     //timeLineRect.width = clientRect.width;
     timeLineRect.current.width = timeLineClientRect.width;
     timeLineRect.current.height = timeLineClientRect.height;
@@ -70,9 +80,52 @@ export function TimeLine(props: ITrucksTimeLineProps) {
       let offsetX = Math.round((translation.x / timeLineWidth) * 100);
       console.log(offsetX + " " + offsetY);*/
 
+      var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
+      //let offsetX = Math.round((state.translation.x / timeLineWidth) * 100);
+      //let offsetX = state.offsetX + (translation.x / timeLineWidth) * 100;
+      let offsetX = (translation.x / timeLineWidth) * 100;
+
+      //-1 the initial step
+      //TODO: state.offsetStep replace some useRef value, or it's needed here?
+      let offsetStep =
+        state.offsetStep + Math.sign(offsetX) * Math.floor(Math.abs(offsetX) / props.timeStepWidth);
+      offsetStep = offsetStep * -1;
+      console.log(offsetStep);
+
+      //offsetX = state.offsetX + offsetX;
+
+      console.log(offsetX);
+      console.log(Math.sign(offsetX) * Math.floor(Math.abs(offsetX) / (2 * props.timeStepWidth)));
+      console.log(
+        offsetX -
+          Math.sign(offsetX) *
+            props.timeStepWidth *
+            Math.floor(Math.abs(offsetX) / props.timeStepWidth),
+      );
+
+      //TODO:state.offsetX should be replaced some useRef value, because it's snapshotted
+      offsetX =
+        state.offsetX +
+        offsetX -
+        Math.sign(offsetX) *
+          props.timeStepWidth *
+          Math.floor(Math.abs(offsetX) / props.timeStepWidth);
+
+      /*offsetX =
+        state.offsetX +
+        offsetX -
+        Math.sign(offsetX) *
+          (2 * props.timeStepWidth) *
+          Math.floor(Math.abs(offsetX) / (2 * props.timeStepWidth));*/
+
+      //TODO: 4*60
+      console.log(new Date(minDate.getTime() + offsetStep * 4 * 60 * 60000));
+
       setState(state => ({
         ...state,
         translation,
+        offsetX,
+        offsetStep,
       }));
     },
     [state.origin],
@@ -80,13 +133,19 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
   function getOffsetX() {
     //if (state.isDragging) {
-      var timeLineWidth = timeLineRect.current.width * (100 - props.truckWidth) / 100;
-      //let offsetX = Math.round((state.translation.x / timeLineWidth) * 100);
-      let offsetX = (state.translation.x / timeLineWidth) * 100;
-      return offsetX;
-    /*} else {
-      return 0;
-    }*/
+    var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
+    //let offsetX = Math.round((state.translation.x / timeLineWidth) * 100);
+    let offsetX = (state.translation.x / timeLineWidth) * 100;
+
+    //-1 the initial step
+    let offsetStep =
+      -1 + -1 * Math.sign(offsetX) * Math.floor(Math.abs(offsetX) / props.timeStepWidth);
+    //console.log(offsetStep);
+
+    //TODO: 4*60
+    //console.log(new Date(minDate.getTime() + offsetStep * 4 * 60 * 60000));
+
+    return offsetX;
   }
 
   const handleMouseUp = useCallback(() => {
@@ -98,11 +157,11 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
   useEffect(() => {
     if (state.isDragging) {
-      console.log("Subscribe");
+      console.log('Subscribe');
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
-      console.log("Unsubscribe");
+      console.log('Unsubscribe');
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
 
@@ -135,23 +194,44 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        height: '100%'
+        height: '100%',
         /*,flexShrink: 0,*/
       }}
     >
       {/* { paddingLeft: `${props.truckWidth}%`, display: 'flex', overflowX: 'hidden' } */}
-      <div id={"timesContainer"} style={{ marginLeft: `${props.truckWidth}%`, display: 'flex', overflowX: 'hidden', flexShrink: 0 }}>
+      <div
+        id={'timesContainer'}
+        style={{
+          marginLeft: `${props.truckWidth}%`,
+          display: 'flex',
+          overflowX: 'hidden',
+          flexShrink: 0,
+        }}
+      >
         {/*  overflowX: 'hidden' */}
-        <div style={{ marginLeft:`${getOffsetX()}%`, 
-         marginRight:`-${getOffsetX()}%` ,width: '100%', display: 'flex'}}>
-          {[...Array(timeStepNumber+1).keys()].map(index => {
+        <div
+          style={{
+            marginLeft: `${state.offsetX}%`,
+            marginRight: `-${state.offsetX}%`,
+            width: '100%',
+            display: 'flex',
+          }}
+        >
+          {/* timeStepNumber + 1*/}
+          {[...Array(timeStepNumber + 1).keys()].map(index => {
             //console.log(minDate);
-            let increasedDate = new Date(minDate.getTime());
+            //let increasedDate = new Date(minDate.getTime());
+            //console.log(new Date(minDate.getTime() + state.offsetStep * 4 * 60 * 60000));
+            let fixDate = new Date(minDate.getTime() + state.offsetStep * 4 * 60 * 60000);
+            let increasedDate = new Date(fixDate.getTime());
             let unit = props.timeStepWidth / (4 * 60);
             let offsetMinute = getOffsetX() / unit;
-            console.log(Math.floor(offsetMinute / (4 * 60) ));
+
+            //console.log(Math.floor(offsetMinute / (4 * 60)));
             //4 is hours
-            increasedDate.setHours(minDate.getHours() + (index-1) * 4);
+            //increasedDate.setHours(minDate.getHours() + (index - 1) * 4);
+            //after 4 hours
+            increasedDate.setHours(fixDate.getHours() + (index - 1) * 4);
             return (
               <div
                 style={{
@@ -172,7 +252,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
       </div>
       <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position: 'relative' }}>
         {/* TODO: this absolute div maybe not needed*/}
-        <div style={{ position: 'absolute', width: "100%", height: "100%" }}></div>
+        <div style={{ position: 'absolute', width: '100%', height: '100%' }}></div>
         {props.trucks.map(truck => (
           <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
             <div
@@ -187,7 +267,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
                 //console.log(order);
                 let initialOffset = Math.floor(props.timeStepWidth / 2);
                 let unit = props.timeStepWidth / (4 * 60);
-               
+
                 let diff = diff_minutes(minDate, order.from);
                 let orderTimeLength = diff_minutes(order.to, order.from);
                 //console.log(diff);
