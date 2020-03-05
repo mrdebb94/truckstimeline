@@ -250,7 +250,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
           })}
         </div>
       </div>
-      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, flexDirection: 'column', position: 'relative', overflowX:'hidden', overflowY:'hidden' }}>
         {/* TODO: this absolute div maybe not needed*/}
         <div style={{ position: 'absolute', width: '100%', height: '100%' }}></div>
         {props.trucks.map(truck => (
@@ -275,7 +275,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
                   <div
                     style={{
                       position: 'absolute',
-                      left: `${initialOffset + unit * diff}%`,
+                      /*left: `${initialOffset + unit * diff}%`,*/
+                      left: `${state.offsetX + unit * diff}%`,
                       width: `${unit * orderTimeLength}%`,
                       backgroundColor: 'blue',
                     }}
