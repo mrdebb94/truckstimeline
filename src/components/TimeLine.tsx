@@ -31,7 +31,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     height: null,
   });
 
-  const truckRect: React.MutableRefObject<{ width: number; height: number }> = useRef({
+  const dataContainerRect: React.MutableRefObject<{ width: number; height: number }> = useRef({
     width: null,
     height: null,
   });
@@ -47,6 +47,10 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     let timeLineClientRect = document.getElementById('timeLineContainer').getBoundingClientRect();
     timeLineRect.current.width = timeLineClientRect.width;
     timeLineRect.current.height = timeLineClientRect.height;
+
+    let dataContainerClientRect = document.getElementById('dataContainer').getBoundingClientRect();
+    dataContainerRect.current.width = dataContainerClientRect.width;
+    dataContainerRect.current.height = dataContainerClientRect.height;
   }, []);
 
   useEffect(() => {
@@ -88,6 +92,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
       var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
 
       let offsetX = (translation.x / timeLineWidth) * 100;
+      let offsetY = (translation.y / dataContainerRect.current.height) * 100;
 
       let offsetStepX =
         previousOffsetStepX.current +
@@ -214,44 +219,49 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         }}
       >
         <div style={{ position: 'absolute', width: '100%', height: '100%' }}></div>
-        {props.trucks.map(truck => (
-          <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
-            <div
-              className={'truck-name'}
-              key={truck.name}
-              style={{ width: `${props.truckWidth}%` }}
-            >
-              {truck.name}
-            </div>
-            <div
-              style={{ flex: 1, position: 'relative', overflowX: 'hidden' }}
-              onMouseDown={handleMouseDown}
-            >
-              {truck.assignedOrder.map(order => {
-                let unit = props.timeStepWidth / (4 * 60);
-                let diff = diff_minutes(order.from, fixTimeDate);
-                if (fixTimeDate.getTime() > order.from.getTime()) {
-                  diff *= -1;
-                }
-                let orderTimeLength = diff_minutes(order.to, order.from);
+        <div
+          id={'dataContainer'}
+          style={{ height: '100%', position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
+        >
+          {props.trucks.map(truck => (
+            <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
+              <div
+                className={'truck-name'}
+                key={truck.name}
+                style={{ width: `${props.truckWidth}%` }}
+              >
+                {truck.name}
+              </div>
+              <div
+                style={{ flex: 1, position: 'relative', overflowX: 'hidden' }}
+                onMouseDown={handleMouseDown}
+              >
+                {truck.assignedOrder.map(order => {
+                  let unit = props.timeStepWidth / (4 * 60);
+                  let diff = diff_minutes(order.from, fixTimeDate);
+                  if (fixTimeDate.getTime() > order.from.getTime()) {
+                    diff *= -1;
+                  }
+                  let orderTimeLength = diff_minutes(order.to, order.from);
 
-                return (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: `${props.timeStepWidth / 2 + state.offsetX + unit * diff}%`,
-                      width: `${unit * orderTimeLength}%`,
-                      backgroundColor: 'blue',
-                    }}
-                    key={order.id}
-                  >
-                    {order.id}
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: `${props.timeStepWidth / 2 + state.offsetX + unit * diff}%`,
+                        width: `${unit * orderTimeLength}%`,
+                        backgroundColor: 'blue',
+                      }}
+                      key={order.id}
+                    >
+                      {order.id}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
