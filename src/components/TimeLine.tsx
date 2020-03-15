@@ -106,11 +106,30 @@ export function TimeLine(props: ITrucksTimeLineProps) {
           props.timeStepWidth *
           Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
 
+      let offsetStepY =
+        previousOffsetStepY.current +
+        Math.sign(previousOffsetY.current + offsetY) *
+          Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
+
+      offsetY =
+        previousOffsetY.current +
+        offsetY -
+        Math.sign(previousOffsetY.current + offsetY) *
+          props.truckHeight *
+          Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
+
+      /*console.log('OffsetX');
+      console.log(offsetX + ' ' + offsetStepX);
+      console.log('OffsetY');*/
+      console.log(offsetY + ' ' + offsetStepY);
+
       setState(state => ({
         ...state,
         translation,
         offsetX,
         offsetStepX,
+        offsetY,
+        offsetStepY,
       }));
     },
     [state.origin],
@@ -133,6 +152,9 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
       previousOffsetX.current = state.offsetX;
       previousOffsetStepX.current = state.offsetStepX;
+
+      previousOffsetY.current = state.offsetY;
+      previousOffsetStepY.current = state.offsetStepY;
     }
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
@@ -221,7 +243,14 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         <div style={{ position: 'absolute', width: '100%', height: '100%' }}></div>
         <div
           id={'dataContainer'}
-          style={{ height: '100%', position: 'absolute', left: 0, right: 0, bottom: 0, top: 0 }}
+          style={{
+            height: '100%',
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            top: `-${state.offsetY}%`,
+          }}
         >
           {props.trucks.map(truck => (
             <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
