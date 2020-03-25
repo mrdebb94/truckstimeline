@@ -29,7 +29,7 @@ module.exports = {
             { from: 'node_modules/react/umd/react.development.js', to: './libs/react/react.development.js' },
             { from: 'node_modules/react-dom/umd/react-dom.development.js', to: './libs/react-dom/react-dom.development.js' },
             { from: 'node_modules/react-router-dom/umd/react-router-dom.js', to: './libs/react-router-dom/react-router-dom.js' },
-            { from: 'static/trucktimeline.json', to: 'trucktimeline.json'}
+            { from: 'static/trucktimeline.json', to: 'trucktimeline.json' }
         ])
     ],
 
@@ -57,6 +57,10 @@ module.exports = {
                         loader: "ts-loader"
                     }
                 ]
+            },
+            {
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader'],
             },
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
             {

@@ -69,7 +69,9 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     }
   }, [props.trucks]);
 
-  const handleMouseDown = useCallback(({ clientX, clientY }) => {
+  const handleMouseDown = useCallback((event: React.MouseEvent) => {
+    var { clientX, clientY } = event;
+    event.preventDefault();
     if (!state.isDragging) {
       setState(state => ({
         ...state,
@@ -86,7 +88,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     ({ clientX, clientY }) => {
       const translation = {
         x: clientX - state.origin.x,
-        y: clientY - state.origin.y,
+        //y: clientY - state.origin.y,
+        y: state.origin.y - clientY,
       };
 
       var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
@@ -107,7 +110,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
           Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
 
       let offsetStepY =
-        previousOffsetStepY.current +
+        previousOffsetStepY.current /*+*/ -
         Math.sign(previousOffsetY.current + offsetY) *
           Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
 
@@ -120,8 +123,12 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
       /*console.log('OffsetX');
       console.log(offsetX + ' ' + offsetStepX);
-      console.log('OffsetY');*/
+      console.log('OffsetY');
       console.log(offsetY + ' ' + offsetStepY);
+      console.log(offsetStepY);
+      console.log(offsetStepY);
+
+      console.log(offsetY + ' ' + offsetStepY);*/
 
       setState(state => ({
         ...state,
@@ -144,10 +151,10 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
   useEffect(() => {
     if (state.isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
+      document.body.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
-      window.removeEventListener('mousemove', handleMouseMove);
+      document.body.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
 
       previousOffsetX.current = state.offsetX;
@@ -158,7 +165,9 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     }
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
+  //TODO: rename
   const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
+  const objectsNumber = useMemo(() => Math.ceil(100 / props.truckHeight), [props.truckHeight]);
 
   function formatDate(date: Date) {
     return `${addLeadingZeros(date.getMonth() + 1)}.${addLeadingZeros(date.getDate())} 
@@ -178,6 +187,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
 
   let fixOrderDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
   let fixTimeDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
+
+  let offsetStepY = Math.max(0, state.offsetStepY);
 
   return (
     <div
@@ -249,10 +260,10 @@ export function TimeLine(props: ITrucksTimeLineProps) {
             left: 0,
             right: 0,
             bottom: 0,
-            top: `-${state.offsetY}%`,
+            top: `${state.offsetY}%`,
           }}
         >
-          {props.trucks.map(truck => (
+          {props.trucks.slice(offsetStepY, offsetStepY + objectsNumber + 1).map(truck => (
             <div key={truck.name} style={{ minHeight: `${props.truckHeight}%`, display: 'flex' }}>
               <div
                 className={'truck-name'}
