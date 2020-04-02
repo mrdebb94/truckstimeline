@@ -13,7 +13,8 @@ function addLeadingZeros(value: number) {
 
 export default function TimeLineHeader({timeStepWidth, truckWidth, offsetX, offsetStepX, minDate}:any) {
     const timeStepNumber = useMemo(() => Math.ceil(100 / timeStepWidth), [timeStepWidth]);
-    
+    //let fixDate = new Date(minDate.getTime() + -offsetStepX * 4 * 60 * 60000);
+    let fixDate = new Date(minDate.getTime() + offsetStepX * 4 * 60 * 60000);
     return (<div
         id={'timesContainer'}
         style={{
@@ -32,7 +33,7 @@ export default function TimeLineHeader({timeStepWidth, truckWidth, offsetX, offs
             }}
         >
             {[...Array(timeStepNumber + 1).keys()].map(index => {
-                let fixDate = new Date(minDate.getTime() + -offsetStepX * 4 * 60 * 60000);
+        
                 let increasedDate = new Date(fixDate.getTime());
                 let unit = timeStepWidth / (4 * 60);
 

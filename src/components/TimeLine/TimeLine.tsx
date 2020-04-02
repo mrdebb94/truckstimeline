@@ -88,10 +88,15 @@ export function TimeLine(props: ITrucksTimeLineProps) {
   const handleMouseMove = useCallback(
     ({ clientX, clientY }) => {
       const translation = {
+        //x: state.origin.x - clientX,
         x: clientX - state.origin.x,
         //y: clientY - state.origin.y,
         y: state.origin.y - clientY,
       };
+
+      console.log(state.origin.x + " " + clientX);
+      console.log(clientX - state.origin.x);
+      console.log(state.origin.x - clientX);
 
       var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
 
@@ -99,7 +104,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
       let offsetY = (translation.y / dataContainerRect.current.height) * 100;
 
       let offsetStepX =
-        previousOffsetStepX.current +
+        previousOffsetStepX.current -
         Math.sign(previousOffsetX.current + offsetX) *
           Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
 
@@ -168,7 +173,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     return Math.abs(Math.round(diff));
   }
 
-  let fixTimeDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
+  //ORIG: let fixTimeDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
+  let fixTimeDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
   let offsetStepY = Math.max(0, state.offsetStepY);
 
   return (
