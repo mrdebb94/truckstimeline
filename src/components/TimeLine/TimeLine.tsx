@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Truck } from '../services/ITruckTimeLineService';
+import { Truck } from '../../services/ITruckTimeLineService';
+import TimeLineHeader from './TimeLineHeader';
 
-interface ITrucksTimeLineProps {
+export interface ITrucksTimeLineProps {
   trucks: Truck[];
   timeStep?: Date;
   timeStepWidth?: number;
@@ -110,7 +111,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
           Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
 
       let offsetStepY =
-        previousOffsetStepY.current /*+*/ -
+        previousOffsetStepY.current -
         Math.sign(previousOffsetY.current + offsetY) *
           Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
 
@@ -120,15 +121,6 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         Math.sign(previousOffsetY.current + offsetY) *
           props.truckHeight *
           Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
-
-      /*console.log('OffsetX');
-      console.log(offsetX + ' ' + offsetStepX);
-      console.log('OffsetY');
-      console.log(offsetY + ' ' + offsetStepY);
-      console.log(offsetStepY);
-      console.log(offsetStepY);
-
-      console.log(offsetY + ' ' + offsetStepY);*/
 
       setState(state => ({
         ...state,
@@ -169,15 +161,6 @@ export function TimeLine(props: ITrucksTimeLineProps) {
   const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
   const objectsNumber = useMemo(() => Math.ceil(100 / props.truckHeight), [props.truckHeight]);
 
-  function formatDate(date: Date) {
-    return `${addLeadingZeros(date.getMonth() + 1)}.${addLeadingZeros(date.getDate())} 
-    ${addLeadingZeros(date.getHours())} ${addLeadingZeros(date.getMinutes())}`;
-  }
-
-  function addLeadingZeros(value: number) {
-    return ('0' + value).slice(-2);
-  }
-
   function diff_minutes(dt2: Date, dt1: Date) {
     var diff = dt2.getTime() - dt1.getTime();
     diff /= 1000;
@@ -185,9 +168,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     return Math.abs(Math.round(diff));
   }
 
-  let fixOrderDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
   let fixTimeDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
-
   let offsetStepY = Math.max(0, state.offsetStepY);
 
   return (
@@ -199,48 +180,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         width: '100%',
         height: '100%',
       }}
-    >
-      <div
-        id={'timesContainer'}
-        style={{
-          marginLeft: `${props.truckWidth}%`,
-          display: 'flex',
-          overflowX: 'hidden',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            marginLeft: `${-props.timeStepWidth + state.offsetX}%`,
-            marginRight: `-${-props.timeStepWidth + state.offsetX}%`,
-            width: '100%',
-            display: 'flex',
-          }}
-        >
-          {[...Array(timeStepNumber + 1).keys()].map(index => {
-            let fixDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
-            let increasedDate = new Date(fixDate.getTime());
-            let unit = props.timeStepWidth / (4 * 60);
-
-            increasedDate.setHours(fixDate.getHours() + (index - 1) * 4);
-            return (
-              <div
-                style={{
-                  display: 'flex',
-                  minWidth: `${props.timeStepWidth}%`,
-                  maxWidth: `${props.timeStepWidth}%`,
-                  whiteSpace: 'nowrap',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-                key={index}
-              >
-                {formatDate(increasedDate)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    > <TimeLineHeader timeStepWidth={props.timeStepWidth} truckWidth={props.truckWidth} offsetX={state.offsetX} 
+    offsetStepX={state.offsetStepX} minDate={minDate}/>
       <div
         style={{
           display: 'flex',

@@ -1,9 +1,8 @@
 import * as React from "react";
 import { useState, useEffect } from 'react';
 
-import { Example } from "./Example";
 import { TruckFilter } from "./TruckFilter";
-import { TimeLine } from "./TimeLine";
+import { TimeLine } from "./TimeLine/TimeLine";
 import { TruckTimeLineService } from "../services/TruckTimeLineService";
 
 //import { RouteComponentProps } from 'react-router-dom';
