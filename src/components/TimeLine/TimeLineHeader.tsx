@@ -1,20 +1,19 @@
 import * as React from 'react';
-import { ITrucksTimeLineProps } from './TimeLine';
 import { useMemo } from 'react';
 
-function formatDate(date: Date) {
+function addLeadingZeros(value: number): string {
+    return ('0' + value).slice(-2);
+}
+
+function formatDate(date: Date): string {
     return `${addLeadingZeros(date.getMonth() + 1)}.${addLeadingZeros(date.getDate())} 
     ${addLeadingZeros(date.getHours())} ${addLeadingZeros(date.getMinutes())}`;
 }
 
-function addLeadingZeros(value: number) {
-    return ('0' + value).slice(-2);
-}
-
-export default function TimeLineHeader({timeStepWidth, truckWidth, offsetX, offsetStepX, minDate}:any) {
+export default function TimeLineHeader({ timeStepWidth, truckWidth, offsetX, offsetStepX, minDate }:
+    { timeStepWidth: number; truckWidth: number; offsetX: number; offsetStepX: number; minDate: Date }): React.ReactElement {
     const timeStepNumber = useMemo(() => Math.ceil(100 / timeStepWidth), [timeStepWidth]);
-    //let fixDate = new Date(minDate.getTime() + -offsetStepX * 4 * 60 * 60000);
-    let fixDate = new Date(minDate.getTime() + offsetStepX * 4 * 60 * 60000);
+    const fixDate = new Date(minDate.getTime() + offsetStepX * 4 * 60 * 60000);
     return (<div
         id={'timesContainer'}
         style={{
@@ -33,9 +32,8 @@ export default function TimeLineHeader({timeStepWidth, truckWidth, offsetX, offs
             }}
         >
             {[...Array(timeStepNumber + 1).keys()].map(index => {
-        
-                let increasedDate = new Date(fixDate.getTime());
-                let unit = timeStepWidth / (4 * 60);
+                const increasedDate = new Date(fixDate.getTime());
+                //let unit = timeStepWidth / (4 * 60);
 
                 increasedDate.setHours(fixDate.getHours() + (index - 1) * 4);
                 return (

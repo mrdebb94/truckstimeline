@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { Truck } from '../../services/ITruckTimeLineService';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Truck, Order } from '../../services/ITruckTimeLineService';
 import TimeLineHeader from './TimeLineHeader';
+import { useEventCallback } from '../../hooks/useEventCallback';
 
-export interface ITrucksTimeLineProps {
+export interface TrucksTimeLineProps {
   trucks: Truck[];
   timeStep?: Date;
   timeStepWidth?: number;
@@ -14,7 +15,27 @@ export interface ITrucksTimeLineProps {
 
 const POSITION = { x: 0, y: 0 };
 
-export function TimeLine(props: ITrucksTimeLineProps) {
+function calculateOffsetStepValue(previousOffsetStepValue: number, previousOffsetDimensionValue: number,
+  currentOffsetDimensionValue: number, offsetUnit: number): number {
+  const offsetStepValue =
+    previousOffsetStepValue -
+    Math.sign(previousOffsetDimensionValue + currentOffsetDimensionValue) *
+    Math.floor(Math.abs(previousOffsetDimensionValue + currentOffsetDimensionValue) / offsetUnit);
+  return offsetStepValue;
+};
+
+function calculateOffsetDimensionValue(previousOffsetDimensionValue: number,
+  currentOffsetDimensionValue: number, offsetUnit: number): number {
+  const offsetDimensionValue = previousOffsetDimensionValue +
+    currentOffsetDimensionValue -
+    Math.sign(previousOffsetDimensionValue + currentOffsetDimensionValue) *
+    offsetUnit *
+    Math.floor(Math.abs(previousOffsetDimensionValue + currentOffsetDimensionValue) / offsetUnit);
+  return offsetDimensionValue;
+}
+
+
+export function TimeLine(props: TrucksTimeLineProps): React.ReactElement {
   const [minDate, setMinDate] = useState(new Date());
   const [state, setState] = useState({
     isDragging: false,
@@ -23,8 +44,7 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     offsetX: 0,
     offsetStepX: 0,
     offsetY: 0,
-    offsetStepY: 0,
-    previousOffsetX: null,
+    offsetStepY: 0
   });
 
   const timeLineRect: React.MutableRefObject<{ width: number; height: number }> = useRef({
@@ -37,7 +57,6 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     height: null,
   });
 
-  const timeWidth = useRef(null);
   const previousOffsetX = useRef(0);
   const previousOffsetStepX = useRef(0);
 
@@ -45,23 +64,23 @@ export function TimeLine(props: ITrucksTimeLineProps) {
   const previousOffsetStepY = useRef(0);
 
   useEffect(() => {
-    let timeLineClientRect = document.getElementById('timeLineContainer').getBoundingClientRect();
+    const timeLineClientRect = document.getElementById('timeLineContainer').getBoundingClientRect();
     timeLineRect.current.width = timeLineClientRect.width;
     timeLineRect.current.height = timeLineClientRect.height;
 
-    let dataContainerClientRect = document.getElementById('dataContainer').getBoundingClientRect();
+    const dataContainerClientRect = document.getElementById('dataContainer').getBoundingClientRect();
     dataContainerRect.current.width = dataContainerClientRect.width;
     dataContainerRect.current.height = dataContainerClientRect.height;
   }, []);
 
   useEffect(() => {
     if (props.trucks.length > 0) {
-      let minDate = new Date(
+      const minDate = new Date(
         Math.min(
-          ...props.trucks.map(truck =>
+          ...props.trucks.map((truck: Truck) =>
             Math.min.apply(
               null,
-              truck.assignedOrder.map(order => order.from),
+              truck.assignedOrder.map((order: Order) => order.from),
             ),
           ),
         ),
@@ -70,9 +89,10 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     }
   }, [props.trucks]);
 
-  const handleMouseDown = useCallback((event: React.MouseEvent) => {
-    var { clientX, clientY } = event;
+  const handleMouseDown = useEventCallback((event: React.MouseEvent) => {
     event.preventDefault();
+    const { clientX, clientY } = event;
+
     if (!state.isDragging) {
       setState(state => ({
         ...state,
@@ -85,47 +105,27 @@ export function TimeLine(props: ITrucksTimeLineProps) {
     }
   }, []);
 
-  const handleMouseMove = useCallback(
-    ({ clientX, clientY }) => {
+  const handleMouseMove = useEventCallback(
+    ({ clientX, clientY }: { clientX: number; clientY: number }) => {
       const translation = {
-        //x: state.origin.x - clientX,
         x: clientX - state.origin.x,
-        //y: clientY - state.origin.y,
         y: state.origin.y - clientY,
       };
 
-      console.log(state.origin.x + " " + clientX);
-      console.log(clientX - state.origin.x);
-      console.log(state.origin.x - clientX);
-
-      var timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
+      const timeLineWidth = (timeLineRect.current.width * (100 - props.truckWidth)) / 100;
 
       let offsetX = (translation.x / timeLineWidth) * 100;
       let offsetY = (translation.y / dataContainerRect.current.height) * 100;
 
-      let offsetStepX =
-        previousOffsetStepX.current -
-        Math.sign(previousOffsetX.current + offsetX) *
-          Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
+      const offsetStepX = calculateOffsetStepValue(previousOffsetStepX.current,
+        previousOffsetX.current, offsetX, props.timeStepWidth);
 
-      offsetX =
-        previousOffsetX.current +
-        offsetX -
-        Math.sign(previousOffsetX.current + offsetX) *
-          props.timeStepWidth *
-          Math.floor(Math.abs(previousOffsetX.current + offsetX) / props.timeStepWidth);
+      offsetX = calculateOffsetDimensionValue(previousOffsetX.current, offsetX, props.timeStepWidth);
 
-      let offsetStepY =
-        previousOffsetStepY.current -
-        Math.sign(previousOffsetY.current + offsetY) *
-          Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
+      const offsetStepY = calculateOffsetStepValue(previousOffsetStepY.current, previousOffsetY.current,
+        offsetY, props.truckHeight);
 
-      offsetY =
-        previousOffsetY.current +
-        offsetY -
-        Math.sign(previousOffsetY.current + offsetY) *
-          props.truckHeight *
-          Math.floor(Math.abs(previousOffsetY.current + offsetY) / props.truckHeight);
+      offsetY = calculateOffsetDimensionValue(previousOffsetY.current, offsetY, props.truckHeight);
 
       setState(state => ({
         ...state,
@@ -136,46 +136,45 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         offsetStepY,
       }));
     },
-    [state.origin],
+    [state.origin, props.truckWidth, props.truckHeight, props.timeStepWidth],
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useEventCallback(() => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    previousOffsetX.current = state.offsetX;
+    previousOffsetStepX.current = state.offsetStepX;
+
+    previousOffsetY.current = state.offsetY;
+    previousOffsetStepY.current = state.offsetStepY;
+
     setState(state => ({
       ...state,
       isDragging: false,
     }));
-  }, []);
+  }, [state.offsetX, state.offsetY, state.offsetStepX, state.offsetStepY]);
 
   useEffect(() => {
     if (state.isDragging) {
-      document.body.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
     } else {
-      document.body.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-
-      previousOffsetX.current = state.offsetX;
-      previousOffsetStepX.current = state.offsetStepX;
-
-      previousOffsetY.current = state.offsetY;
-      previousOffsetStepY.current = state.offsetStepY;
+      document.removeEventListener('mouseup', handleMouseUp);
     }
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
   //TODO: rename
-  const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
+  //const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
   const objectsNumber = useMemo(() => Math.ceil(100 / props.truckHeight), [props.truckHeight]);
 
-  function diff_minutes(dt2: Date, dt1: Date) {
-    var diff = dt2.getTime() - dt1.getTime();
+  function diffMinutes(dt2: Date, dt1: Date): number {
+    let diff = dt2.getTime() - dt1.getTime();
     diff /= 1000;
     diff /= 60;
     return Math.abs(Math.round(diff));
   }
 
-  //ORIG: let fixTimeDate = new Date(minDate.getTime() + -state.offsetStepX * 4 * 60 * 60000);
-  let fixTimeDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
-  let offsetStepY = Math.max(0, state.offsetStepY);
+  const fixTimeDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
+  const offsetStepY = Math.max(0, state.offsetStepY);
 
   return (
     <div
@@ -186,8 +185,8 @@ export function TimeLine(props: ITrucksTimeLineProps) {
         width: '100%',
         height: '100%',
       }}
-    > <TimeLineHeader timeStepWidth={props.timeStepWidth} truckWidth={props.truckWidth} offsetX={state.offsetX} 
-    offsetStepX={state.offsetStepX} minDate={minDate}/>
+    > <TimeLineHeader timeStepWidth={props.timeStepWidth} truckWidth={props.truckWidth} offsetX={state.offsetX}
+      offsetStepX={state.offsetStepX} minDate={minDate} />
       <div
         style={{
           display: 'flex',
@@ -223,13 +222,13 @@ export function TimeLine(props: ITrucksTimeLineProps) {
                 style={{ flex: 1, position: 'relative', overflowX: 'hidden' }}
                 onMouseDown={handleMouseDown}
               >
-                {truck.assignedOrder.map(order => {
-                  let unit = props.timeStepWidth / (4 * 60);
-                  let diff = diff_minutes(order.from, fixTimeDate);
+                {truck.assignedOrder.map((order: any) => {
+                  const unit = props.timeStepWidth / (4 * 60);
+                  let diff = diffMinutes(order.from, fixTimeDate);
                   if (fixTimeDate.getTime() > order.from.getTime()) {
                     diff *= -1;
                   }
-                  let orderTimeLength = diff_minutes(order.to, order.from);
+                  const orderTimeLength = diffMinutes(order.to, order.from);
 
                   return (
                     <div

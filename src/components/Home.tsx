@@ -6,11 +6,11 @@ import { TimeLine } from "./TimeLine/TimeLine";
 import { TruckTimeLineService } from "../services/TruckTimeLineService";
 
 //import { RouteComponentProps } from 'react-router-dom';
-export default function Home() {
+export default function Home(): React.ReactElement {
   const [trucks, setTrucks] = useState([]);
   useEffect(() => {
-    let truckTimeLineService = new TruckTimeLineService();
-    let getTrucksTimeLine = async () => {
+    const truckTimeLineService = new TruckTimeLineService();
+    const getTrucksTimeLine = async (): Promise<void> => {
       setTrucks(await truckTimeLineService.getTrucksTimeLine("trucktimeline.json"));
     };
     getTrucksTimeLine();

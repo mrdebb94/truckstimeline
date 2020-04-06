@@ -1,18 +1,10 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
-import { TruckTimeLineService } from '../services/TruckTimeLineService';
 
+interface Props {
+  children: React.ReactNode;
+}
 
-function Application(props:any) {
-    /*const [trucksTimeLine, setTrucksTimeLine] = useState({});
-    useEffect(()=>{
-      let truckTimeLineService = new TruckTimeLineService();
-      let getTrucksTimeLine = async () => {
-        setTrucksTimeLine(await truckTimeLineService.getTrucksTimeLine("trucktimeline.json"));
-      };
-      getTrucksTimeLine();
-    }, []);
-    console.log(trucksTimeLine);*/
-    return <div>{props.children}</div>;
-  };
+function Application(props: Props): React.ReactElement {
+  return <div>{props.children}</div>;
+}
 export default Application;

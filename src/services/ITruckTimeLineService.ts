@@ -1,24 +1,24 @@
 export interface Order {
-    id:string;
+    id: string;
     from: Date;
     to: Date;
-};
+}
 
 export interface TruckResponse {
-    name:string;
+    name: string;
     assignedOrderId: string[];
 }
 
 export interface Truck {
-    name:string;
+    name: string;
     assignedOrder: Order[];
 }
 
 export interface TrucksTimeLineResponse {
-    trucks:TruckResponse[];
-    orders:Order[];
+    trucks: TruckResponse[];
+    orders: Order[];
 }
 
-export interface ITrucksTimeLineService {
-    getTrucksTimeLine(url:string):Promise<Truck[]>;
+export interface TrucksTimeLineService {
+    getTrucksTimeLine(url: string): Promise<Truck[]>;
 }
