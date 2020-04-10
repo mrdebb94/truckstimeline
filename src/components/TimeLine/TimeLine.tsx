@@ -162,8 +162,6 @@ export function TimeLine(props: TrucksTimeLineProps): React.ReactElement {
     }
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
-  //TODO: rename
-  //const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
   const objectsNumber = useMemo(() => Math.ceil(100 / props.truckHeight), [props.truckHeight]);
 
   function diffMinutes(dt2: Date, dt1: Date): number {
