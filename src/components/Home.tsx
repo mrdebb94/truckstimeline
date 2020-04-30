@@ -5,7 +5,6 @@ import { TruckFilter } from "./TruckFilter";
 import { TimeLine } from "./TimeLine/TimeLine";
 import { TruckTimeLineService } from "../services/TruckTimeLineService";
 
-//import { RouteComponentProps } from 'react-router-dom';
 export default function Home(): React.ReactElement {
   const [trucks, setTrucks] = useState([]);
   useEffect(() => {
@@ -19,19 +18,8 @@ export default function Home(): React.ReactElement {
     <div>
       <TruckFilter></TruckFilter>
       <div style={{ width: 700, height: 500 }}>
-        <TimeLine trucks={trucks} truckHeight={40} truckWidth={20} timeStepWidth={30}></TimeLine>
+        <TimeLine trucks={trucks} truckHeight={20} truckWidth={20} timeStepWidth={30}></TimeLine>
       </div>
     </div>
   );
 }
-//export default class Home extends React.Component<RouteComponentProps<{}>, {}> {
-/*export default class Home extends React.Component {
-  public render() {
-    return (
-      <div>
-        <TruckFilter></TruckFilter>
-        <TimeLine></TimeLine>
-      </div>
-    );
-  }
-}*/

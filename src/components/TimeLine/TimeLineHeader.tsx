@@ -1,50 +1,37 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { formatDate } from '../../utils/DateUtils';
 
-function addLeadingZeros(value: number): string {
-    return ('0' + value).slice(-2);
-}
-
-function formatDate(date: Date): string {
-    return `${addLeadingZeros(date.getMonth() + 1)}.${addLeadingZeros(date.getDate())} 
-    ${addLeadingZeros(date.getHours())} ${addLeadingZeros(date.getMinutes())}`;
-}
+import '../../../static/TimeLine.css';
 
 export default function TimeLineHeader({ timeStepWidth, truckWidth, offsetX, offsetStepX, minDate }:
     { timeStepWidth: number; truckWidth: number; offsetX: number; offsetStepX: number; minDate: Date }): React.ReactElement {
+
     const timeStepNumber = useMemo(() => Math.ceil(100 / timeStepWidth), [timeStepWidth]);
     const fixDate = new Date(minDate.getTime() + offsetStepX * 4 * 60 * 60000);
     return (<div
-        id={'timesContainer'}
+        className={'timeLineHeader'}
         style={{
-            marginLeft: `${truckWidth}%`,
-            display: 'flex',
-            overflowX: 'hidden',
-            flexShrink: 0,
+            marginLeft: `${truckWidth}%`
         }}
     >
         <div
+            className={'timesContainer'}
             style={{
                 marginLeft: `${-timeStepWidth + offsetX}%`,
                 marginRight: `-${-timeStepWidth + offsetX}%`,
-                width: '100%',
-                display: 'flex',
             }}
         >
             {[...Array(timeStepNumber + 1).keys()].map(index => {
                 const increasedDate = new Date(fixDate.getTime());
-                //let unit = timeStepWidth / (4 * 60);
-
                 increasedDate.setHours(fixDate.getHours() + (index - 1) * 4);
+
                 return (
                     <div
+                        className={'time'}
                         style={{
-                            display: 'flex',
                             minWidth: `${timeStepWidth}%`,
-                            maxWidth: `${timeStepWidth}%`,
-                            whiteSpace: 'nowrap',
-                            justifyContent: 'center',
-                            alignItems: 'center',
+                            maxWidth: `${timeStepWidth}%`
                         }}
                         key={index}
                     >

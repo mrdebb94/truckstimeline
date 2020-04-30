@@ -3,6 +3,9 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { Truck, Order } from '../../services/ITruckTimeLineService';
 import TimeLineHeader from './TimeLineHeader';
 import { useEventCallback } from '../../hooks/useEventCallback';
+import { diffMinutes } from '../../utils/DateUtils';
+
+import '../../../static/TimeLine.css';
 
 export interface TrucksTimeLineProps {
   trucks: Truck[];
@@ -64,11 +67,11 @@ export function TimeLine(props: TrucksTimeLineProps): React.ReactElement {
   const previousOffsetStepY = useRef(0);
 
   useEffect(() => {
-    const timeLineClientRect = document.getElementById('timeLineContainer').getBoundingClientRect();
+    const timeLineClientRect = document.getElementsByClassName('timeLineContainer')[0].getBoundingClientRect();
     timeLineRect.current.width = timeLineClientRect.width;
     timeLineRect.current.height = timeLineClientRect.height;
 
-    const dataContainerClientRect = document.getElementById('dataContainer').getBoundingClientRect();
+    const dataContainerClientRect = document.getElementsByClassName('dataContainer')[0].getBoundingClientRect();
     dataContainerRect.current.width = dataContainerClientRect.width;
     dataContainerRect.current.height = dataContainerClientRect.height;
   }, []);
@@ -163,47 +166,23 @@ export function TimeLine(props: TrucksTimeLineProps): React.ReactElement {
   }, [state.isDragging, handleMouseMove, handleMouseUp]);
 
   const objectsNumber = useMemo(() => Math.ceil(100 / props.truckHeight), [props.truckHeight]);
-
-  function diffMinutes(dt2: Date, dt1: Date): number {
-    let diff = dt2.getTime() - dt1.getTime();
-    diff /= 1000;
-    diff /= 60;
-    return Math.abs(Math.round(diff));
-  }
-
+  //TODO: 4, 60, 60000 konstansba
   const fixTimeDate = new Date(minDate.getTime() + state.offsetStepX * 4 * 60 * 60000);
   const offsetStepY = Math.max(0, state.offsetStepY);
 
+  const timeStepNumber = useMemo(() => Math.ceil(100 / props.timeStepWidth), [props.timeStepWidth]);
   return (
     <div
-      id="timeLineContainer"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%',
-        height: '100%',
-      }}
+      className="timeLineContainer"
     > <TimeLineHeader timeStepWidth={props.timeStepWidth} truckWidth={props.truckWidth} offsetX={state.offsetX}
       offsetStepX={state.offsetStepX} minDate={minDate} />
       <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          flexDirection: 'column',
-          position: 'relative',
-          overflowX: 'hidden',
-          overflowY: 'hidden',
-        }}
+        className="dataWrapper"
       >
         <div style={{ position: 'absolute', width: '100%', height: '100%' }}></div>
         <div
-          id={'dataContainer'}
+          className={'dataContainer'}
           style={{
-            height: '100%',
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: 0,
             top: `${state.offsetY}%`,
           }}
         >
@@ -220,28 +199,43 @@ export function TimeLine(props: TrucksTimeLineProps): React.ReactElement {
                 style={{ flex: 1, position: 'relative', overflowX: 'hidden' }}
                 onMouseDown={handleMouseDown}
               >
-                {truck.assignedOrder.map((order: any) => {
-                  const unit = props.timeStepWidth / (4 * 60);
-                  let diff = diffMinutes(order.from, fixTimeDate);
-                  if (fixTimeDate.getTime() > order.from.getTime()) {
-                    diff *= -1;
-                  }
-                  const orderTimeLength = diffMinutes(order.to, order.from);
+                {truck.assignedOrder
+                  .filter((order: any) => {
+                    const firstDate = new Date(fixTimeDate.getTime());
+                    firstDate.setHours(fixTimeDate.getHours() - 4);
 
-                  return (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: `${props.timeStepWidth / 2 + state.offsetX + unit * diff}%`,
-                        width: `${unit * orderTimeLength}%`,
-                        backgroundColor: 'blue',
-                      }}
-                      key={order.id}
-                    >
-                      {order.id}
-                    </div>
-                  );
-                })}
+                    const lastDate = new Date(fixTimeDate.getTime());
+                    lastDate.setHours(fixTimeDate.getHours() + 4 * (timeStepNumber));
+
+                    //(StartA <= EndB) and (EndA >= StartB)
+                    if (firstDate <= order.to && lastDate >= order.from) {
+                      return true;
+                    }
+
+                    return false;
+                  })
+                  .map((order: any) => {
+                    const unit = props.timeStepWidth / (4 * 60);
+                    let diff = diffMinutes(order.from, fixTimeDate);
+                    if (fixTimeDate.getTime() > order.from.getTime()) {
+                      diff *= -1;
+                    }
+                    const orderTimeLength = diffMinutes(order.to, order.from);
+
+                    return (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: `${props.timeStepWidth / 2 + state.offsetX + unit * diff}%`,
+                          width: `${unit * orderTimeLength}%`,
+                          backgroundColor: 'blue',
+                        }}
+                        key={order.id}
+                      >
+                        {order.id}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           ))}
